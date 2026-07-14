@@ -1,8 +1,27 @@
-# Parallelized arithmetics operations
+# Parallelized arithmetic / logic operations
+#
+# These instructions have prefix=6 (group=6).  The processor executes the
+# instruction in the delay slot first, then this instruction.
 
-###########################################################################################
-# Subtract
-###########################################################################################
+#------------------------------------------------------------------------------
+# Helper subconstructors that encode a second source register in bits 3 and 7
+#------------------------------------------------------------------------------
+
+# For 3-operand add forms (operation 0xC): second source is r0-r3
+regC2C: r0 is ins0303=0 & ins0707=0 & r0 { export r0; }
+regC2C: r1 is ins0303=1 & ins0707=0 & r1 { export r1; }
+regC2C: r2 is ins0303=0 & ins0707=1 & r2 { export r2; }
+regC2C: r3 is ins0303=1 & ins0707=1 & r3 { export r3; }
+
+# For 3-operand add forms (operation 0xD): second source is r4-r7
+regC2D: r4 is ins0303=0 & ins0707=0 & r4 { export r4; }
+regC2D: r5 is ins0303=1 & ins0707=0 & r5 { export r5; }
+regC2D: r6 is ins0303=0 & ins0707=1 & r6 { export r6; }
+regC2D: r7 is ins0303=1 & ins0707=1 & r7 { export r7; }
+
+#------------------------------------------------------------------------------
+# Subtract (original definition)
+#------------------------------------------------------------------------------
 
 #
 # rA = rB - rC
@@ -13,4 +32,246 @@
     # next instruction is executed first
     delayslot(1);
 	regAl = regBl - regCxl;
+}
+
+#------------------------------------------------------------------------------
+# Move
+#------------------------------------------------------------------------------
+
+#
+# rA = rB
+# => mov rA, rB
+#
+:mov regA, regB is group=6 & ins0811=0x6 & regA & regB
+{
+    delayslot(1);
+    regA = regB;
+}
+
+#
+# rA_rA = rB_rB
+# => mov rA_rA, rB_rB
+#
+:mov dregA, dregB is group=6 & ins0811=0x5 & dregA & dregB
+{
+    delayslot(1);
+    dregA = dregB;
+}
+
+#
+# rA<8-15> = 0
+# => mov rA, #0
+#
+:mov regAh, 0 is group=6 & ins0411=0x4C & regAh
+{
+    delayslot(1);
+    regAh = 0;
+}
+
+#
+# rA_rA = 0
+# => mov rA_rA, #0
+#
+:mov dregA, 0 is group=6 & ins0411=0x48 & dregA
+{
+    delayslot(1);
+    dregA = 0;
+}
+
+#
+# Special-register moves (operation 0x44)
+#
+:mov sp, usp is group=6 & ins0411=0x44 & dregA=0 & sp & usp { delayslot(1); sp = usp; }
+:mov sp, ssp is group=6 & ins0411=0x44 & dregA=1 & sp & ssp { delayslot(1); sp = ssp; }
+:mov usp, sp is group=6 & ins0411=0x44 & dregA=2 & usp & sp { delayslot(1); usp = sp; }
+:mov ssp, sp is group=6 & ins0411=0x44 & dregA=3 & ssp & sp { delayslot(1); ssp = sp; }
+:mov sp, usp is group=6 & ins0411=0x44 & dregA=4 & sp & usp { delayslot(1); sp = usp; }
+:mov sp, ssp is group=6 & ins0411=0x44 & dregA=5 & sp & ssp { delayslot(1); sp = ssp; }
+:mov usp, sp is group=6 & ins0411=0x44 & dregA=6 & usp & sp { delayslot(1); usp = sp; }
+:mov ssp, sp is group=6 & ins0411=0x44 & dregA=7 & ssp & sp { delayslot(1); ssp = sp; }
+
+#------------------------------------------------------------------------------
+# Add
+#------------------------------------------------------------------------------
+
+#
+# rA += rB
+# => add rA, rB
+#
+:add regA, regB is group=6 & ins0811=0x8 & regA & regB
+{
+    delayslot(1);
+    regA = regA + regB;
+}
+
+#
+# rA = rB + rC   (rC in r0-r3)
+# => add rA, rB, rC
+#
+:add regAl, regBl, regC2C is group=6 & ins0811=0xC & regAl & regBl & regC2C
+{
+    delayslot(1);
+    regAl = regBl + regC2C;
+}
+
+#
+# rA = rB + rC   (rC in r4-r7)
+# => add rA, rB, rC
+#
+:add regAl, regBl, regC2D is group=6 & ins0811=0xD & regAl & regBl & regC2D
+{
+    delayslot(1);
+    regAl = regBl + regC2D;
+}
+
+#------------------------------------------------------------------------------
+# Multiply
+#------------------------------------------------------------------------------
+
+#
+# rA *= rB
+# => mul rA, rB
+#
+:mul regA, regB is group=6 & ins0811=0xB & regA & regB
+{
+    delayslot(1);
+    regA = regA * regB;
+}
+
+#------------------------------------------------------------------------------
+# Sign / zero extension
+#------------------------------------------------------------------------------
+
+#
+# rA = rB.b0 (u)
+# => uxtb rA, rB
+#
+:uxtb regAl, regBl is group=6 & ins0811=0x7 & ins0303=0 & ins0707=0 & regAl & regBl
+{
+    delayslot(1);
+    regAl = zext(regBl:1);
+}
+
+#
+# rA = rB.b0 (s)
+# => sxtb rA, rB
+#
+:sxtb regAl, regBl is group=6 & ins0811=0x7 & ins0303=1 & ins0707=0 & regAl & regBl
+{
+    delayslot(1);
+    regAl = sext(regBl:1);
+}
+
+#
+# rA = rB.l (u)
+# => uxth rA, rB
+#
+:uxth regAl, regBl is group=6 & ins0811=0x7 & ins0303=0 & ins0707=1 & regAl & regBl
+{
+    delayslot(1);
+    regAl = zext(regBl:2);
+}
+
+#
+# rA = rB.l (s)
+# => sxth rA, rB
+#
+:sxth regAl, regBl is group=6 & ins0811=0x7 & ins0303=1 & ins0707=1 & regAl & regBl
+{
+    delayslot(1);
+    regAl = sext(regBl:2);
+}
+
+#------------------------------------------------------------------------------
+# Logic
+#------------------------------------------------------------------------------
+
+#
+# rA &= rB
+#
+:and regAl, regBl is group=6 & ins0811=0x9 & ins0303=0 & ins0707=1 & regAl & regBl
+{
+    delayslot(1);
+    regAl = regAl & regBl;
+}
+
+#
+# rA |= rB
+#
+:or regAl, regBl is group=6 & ins0811=0x9 & ins0303=0 & ins0707=0 & regAl & regBl
+{
+    delayslot(1);
+    regAl = regAl | regBl;
+}
+
+#
+# rA ^= rB
+#
+:xor regAl, regBl is group=6 & ins0811=0x9 & ins0303=1 & ins0707=0 & regAl & regBl
+{
+    delayslot(1);
+    regAl = regAl ^ regBl;
+}
+
+#
+# rA = ~rB
+#
+:not regAl, regBl is group=6 & ins0811=0x9 & ins0303=1 & ins0707=1 & regAl & regBl
+{
+    delayslot(1);
+    regAl = ~regBl;
+}
+
+#------------------------------------------------------------------------------
+# Shifts / rotates
+#------------------------------------------------------------------------------
+
+#
+# rA <<= rB
+#
+:shl regAl, regBl is group=6 & ins0811=0xA & ins0303=0 & ins0707=0 & regAl & regBl
+{
+    delayslot(1);
+    regAl = regAl << regBl;
+}
+
+#
+# rA >>= rB   (arithmetic right shift)
+#
+:asr regAl, regBl is group=6 & ins0811=0xA & ins0303=0 & ins0707=1 & regAl & regBl
+{
+    delayslot(1);
+    regAl = regAl s>> regBl;
+}
+
+#
+# rA <<<= rB   (rotate left)
+#
+:rol regAl, regBl is group=6 & ins0811=0xA & ins0303=1 & ins0707=0 & regAl & regBl
+{
+    delayslot(1);
+    regAl = (regAl << regBl) | (regAl >> (32 - regBl));
+}
+
+#
+# rA >>>= rB   (logical right shift)
+#
+:lsr regAl, regBl is group=6 & ins0811=0xA & ins0303=1 & ins0707=1 & regAl & regBl
+{
+    delayslot(1);
+    regAl = regAl >> regBl;
+}
+
+#------------------------------------------------------------------------------
+# Unknown 24-bit parallel forms (operation 0x40 / 0x41)
+#------------------------------------------------------------------------------
+
+:unknown is group=6 & ins0411=0x40 ; imm1623
+{
+    delayslot(1);
+}
+
+:unknown is group=6 & ins0411=0x41 ; imm1623
+{
+    delayslot(1);
 }

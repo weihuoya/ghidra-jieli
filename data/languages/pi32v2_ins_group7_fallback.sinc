@@ -1,0 +1,25 @@
+# Generic 32-bit fallbacks for group-7 instruction families that are not yet
+# fully decoded.  These constructors intentionally match only the first-word
+# opcode nibble (ins0811) and consume the second 16-bit word so that Ghidra
+# keeps instruction alignment.  More specific patterns in other .sinc files
+# take precedence because they constrain additional opcode/operand bits.
+
+# Low-ins0811 group-7 families (0x0..0x3) - division, saturation, extract, etc.
+:unknown is group=7 & ins0811=0x0 ; imm1627 { }
+:unknown is group=7 & ins0811=0x1 ; imm1627 { }
+:unknown is group=7 & ins0811=0x2 ; imm1627 { }
+:unknown is group=7 & ins0811=0x3 ; imm1627 { }
+
+# DSP / saturation-like families (ins0811 = 0x4 / 0x5)
+:unknown is group=7 & ins0811=0x4 ; imm1627 { }
+:unknown is group=7 & ins0811=0x5 ; imm1627 { }
+
+# Conditional / logical / memory families (ins0811 = 0x8 .. 0xF)
+:unknown is group=7 & ins0811=0x8 ; imm1627 { }
+:unknown is group=7 & ins0811=0x9 ; imm1627 { }
+:unknown is group=7 & ins0811=0xA ; imm1627 { }
+:unknown is group=7 & ins0811=0xB ; imm1627 { }
+:unknown is group=7 & ins0811=0xC ; imm1627 { }
+:unknown is group=7 & ins0811=0xD ; imm1627 { }
+:unknown is group=7 & ins0811=0xE ; imm1627 { }
+:unknown is group=7 & ins0811=0xF ; imm1627 { }

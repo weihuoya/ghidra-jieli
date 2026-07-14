@@ -608,7 +608,10 @@ define pcodeop TODO;
 @include "pi32v2_ins_bitops.sinc"
 @include "pi32v2_ins_loadimm.sinc"
 @include "pi32v2_ins_loadstore.sinc"
+@include "pi32v2_ins_loadstore_extra.sinc"
 @include "pi32v2_ins_ifthenelse.sinc"
+@include "pi32v2_ins_group7_misc.sinc"
+@include "pi32v2_ins_group7_fallback.sinc"
 
 ##########################################################################################
 # Uncategorized #

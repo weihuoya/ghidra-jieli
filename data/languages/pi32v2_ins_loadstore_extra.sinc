@@ -1,0 +1,19 @@
+# Sp-relative load/store with offsets larger than the base load/store range.
+#
+# These instructions use group=1 with ins0407=2 (load) or ins0407=0xA (store).
+# The offset is encoded as (offset / 4) - 32 in the imm0812 field, giving a
+# range of 128..248 bytes in steps of 4.
+
+:lw regA, [sp+off] is group=1 & ins0407=2 & sp & regA & imm0812
+[ off = (imm0812 + 32) * 4; ]
+{
+    local addr:4 = sp + off;
+    regA = *:4 addr;
+}
+
+:sw regA, [sp+off] is group=1 & ins0407=0xA & sp & regA & imm0812
+[ off = (imm0812 + 32) * 4; ]
+{
+    local addr:4 = sp + off;
+    *:4 addr = regA;
+}

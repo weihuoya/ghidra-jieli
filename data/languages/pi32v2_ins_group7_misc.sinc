@@ -1,0 +1,60 @@
+# Miscellaneous group-7 instructions that were the last decoded-by-LLVM
+# patterns not covered by more specific .sinc files.
+
+define pcodeop divu64;
+define pcodeop ashl64;
+define pcodeop lshr64;
+define pcodeop sat16s;
+define pcodeop sat8u;
+
+#------------------------------------------------------------------------------
+# Unsigned division of 64-bit paired registers by a 32-bit register
+# Encoding: first word 0xe1f6, second word encodes dest low reg (eregA>>1),
+#           src low reg (eregB>>1) and divisor (eregC).
+#------------------------------------------------------------------------------
+:divu edregA, edregB, eregC is group=7 & ins0411=0x1F & regA=6 ; edregA & edregB & eregC
+{
+    edregA = divu64(edregB, eregC);
+}
+
+#------------------------------------------------------------------------------
+# Shift of 64-bit paired registers by a 32-bit register count
+# Encoding: first word 0xe1d8, direction in imm1617 (0 = left, 2 = right)
+#------------------------------------------------------------------------------
+:shl edregA, eregC is group=7 & ins0411=0x1D & regA=8 ; edregA & eregC & imm1617=0
+{
+    edregA = ashl64(edregA, eregC);
+}
+
+:shr edregA, eregC is group=7 & ins0411=0x1D & regA=8 ; edregA & eregC & imm1617=2
+{
+    edregA = lshr64(edregA, eregC);
+}
+
+#------------------------------------------------------------------------------
+# Saturation
+#------------------------------------------------------------------------------
+:sat16 eregA, eregC is group=7 & ins0411=0x07 & regA=0xA ; eregA & eregC
+{
+    eregA = sat16s(eregC);
+}
+
+:sat8 eregA, eregC is group=7 & ins0411=0x07 & regA=0x4 ; eregA & eregC
+{
+    eregA = sat8u(eregC);
+}
+
+#------------------------------------------------------------------------------
+# Load immediate into low 16 bits of a register (high half unchanged)
+#------------------------------------------------------------------------------
+:"mov " regA ".l, " imm1631 is group=7 & ins0411=0x0B & regA ; imm1631
+{
+    local tmp:4 = regA & 0xFFFF0000;
+    regA = tmp | imm1631;
+}
+
+:"mov " regA ".l, " imm1631 is group=7 & ins0411=0x02 & regA ; imm1631
+{
+    local tmp:4 = regA & 0xFFFF0000;
+    regA = tmp | imm1631;
+}

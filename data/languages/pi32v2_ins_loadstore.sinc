@@ -747,3 +747,89 @@ ReadRegs: ReadRegsMap is ReadRegsMap [bitset=0; counter=0; sep=0;] {}
     eregB = eregB + eregA;
     *:1 eregB = eregC:1;
 }
+
+###########################################################################################
+# Register-indexed load/store (post-increment by r8-r15)
+#
+# These forms encode the index register in the sub-opcode field (bits 7-12):
+#   0x10-0x17 : word load/store, index = r8-r15
+#   0x18-0x1F : halfword (unsigned) load/store, index = r8-r15
+#   0x20-0x27 : byte (unsigned) load/store, index = r8-r15
+# bit 3 distinguishes load (0) from store (1).
+###########################################################################################
+
+# Index-register subconstructors for word operations
+idx8_15w: r8  is ins0712=0x10 & r8  { export r8; }
+idx8_15w: r9  is ins0712=0x11 & r9  { export r9; }
+idx8_15w: r10 is ins0712=0x12 & r10 { export r10; }
+idx8_15w: r11 is ins0712=0x13 & r11 { export r11; }
+idx8_15w: r12 is ins0712=0x14 & r12 { export r12; }
+idx8_15w: r13 is ins0712=0x15 & r13 { export r13; }
+idx8_15w: r14 is ins0712=0x16 & r14 { export r14; }
+idx8_15w: r15 is ins0712=0x17 & r15 { export r15; }
+
+# Index-register subconstructors for halfword operations
+idx8_15h: r8  is ins0712=0x18 & r8  { export r8; }
+idx8_15h: r9  is ins0712=0x19 & r9  { export r9; }
+idx8_15h: r10 is ins0712=0x1A & r10 { export r10; }
+idx8_15h: r11 is ins0712=0x1B & r11 { export r11; }
+idx8_15h: r12 is ins0712=0x1C & r12 { export r12; }
+idx8_15h: r13 is ins0712=0x1D & r13 { export r13; }
+idx8_15h: r14 is ins0712=0x1E & r14 { export r14; }
+idx8_15h: r15 is ins0712=0x1F & r15 { export r15; }
+
+# Index-register subconstructors for byte operations
+idx8_15b: r8  is ins0712=0x20 & r8  { export r8; }
+idx8_15b: r9  is ins0712=0x21 & r9  { export r9; }
+idx8_15b: r10 is ins0712=0x22 & r10 { export r10; }
+idx8_15b: r11 is ins0712=0x23 & r11 { export r11; }
+idx8_15b: r12 is ins0712=0x24 & r12 { export r12; }
+idx8_15b: r13 is ins0712=0x25 & r13 { export r13; }
+idx8_15b: r14 is ins0712=0x26 & r14 { export r14; }
+idx8_15b: r15 is ins0712=0x27 & r15 { export r15; }
+
+#
+# Word load/store with index register
+#
+:lw regAl, [regBl ++= idx8_15w] is group=0 & ins0303=0 & regAl & regBl & idx8_15w
+{
+	regAl = *:4 regBl;
+	regBl = regBl + idx8_15w;
+}
+
+:sw regAl, [regBl ++= idx8_15w] is group=0 & ins0303=1 & regAl & regBl & idx8_15w
+{
+	*:4 regBl = regAl;
+	regBl = regBl + idx8_15w;
+}
+
+#
+# Halfword (zero-extend) load/store with index register
+#
+:lh.z regAl, [regBl ++= idx8_15h] is group=0 & ins0303=0 & regAl & regBl & idx8_15h
+{
+	regAl = zext(*:2 regBl);
+	regBl = regBl + idx8_15h;
+}
+
+:sh regAl, [regBl ++= idx8_15h] is group=0 & ins0303=1 & regAl & regBl & idx8_15h
+{
+	*:2 regBl = regAl:2;
+	regBl = regBl + idx8_15h;
+}
+
+#
+# Byte (zero-extend) load/store with index register
+#
+:lb.z regAl, [regBl ++= idx8_15b] is group=0 & ins0303=0 & regAl & regBl & idx8_15b
+{
+	regAl = zext(*:1 regBl);
+	regBl = regBl + idx8_15b;
+}
+
+:sb regAl, [regBl ++= idx8_15b] is group=0 & ins0303=1 & regAl & regBl & idx8_15b
+{
+	*:1 regBl = regAl:1;
+	regBl = regBl + idx8_15b;
+}
+
